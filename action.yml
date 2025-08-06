@@ -7,7 +7,7 @@ branding:
 
 inputs:
   action:
-    description: 'Which action to run (npm-publish, vscode-publish, docker-build, release-manager, code-quality)'
+    description: 'Which action to run (npm-publish, vscode-publish, docker-build, release-manager, code-quality, print-numbers)'
     required: true
   
   # NPM发布参数
@@ -54,6 +54,20 @@ inputs:
     description: '[Release] Release body/notes'
     required: false
   
+  # 测试用参数
+  test_number:
+    description: '[Test] Number to print from 1 to n'
+    required: false
+    default: '10'
+  test_prefix:
+    description: '[Test] Prefix for each number'
+    required: false
+    default: 'Number: '
+  test_format:
+    description: '[Test] Output format (list, json, csv)'
+    required: false
+    default: 'list'
+  
 
 
 runs:
@@ -96,3 +110,11 @@ runs:
       with:
         enable_lint: ${{ inputs.enable_lint }}
         enable_test: ${{ inputs.enable_test }}
+    
+    - name: Run Print Numbers Test
+      if: inputs.action == 'print-numbers'
+      uses: ./print-numbers
+      with:
+        number: ${{ inputs.test_number }}
+        prefix: ${{ inputs.test_prefix }}
+        format: ${{ inputs.test_format }}

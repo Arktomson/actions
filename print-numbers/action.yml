@@ -1,0 +1,144 @@
+name: 'Print Numbers'
+description: '打印从1到n的数字 - 用于测试GitHub Action'
+
+branding:
+  icon: 'hash'
+  color: 'green'
+
+inputs:
+  number:
+    description: '要打印到的数字n'
+    required: true
+    default: '10'
+  prefix:
+    description: '每行数字的前缀'
+    required: false
+    default: 'Number: '
+  format:
+    description: '输出格式 (list, json, csv)'
+    required: false
+    default: 'list'
+
+outputs:
+  result:
+    description: '生成的数字列表'
+  count:
+    description: '打印的数字总数'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 验证输入
+      shell: bash
+      run: |
+        if ! [[ "${{ inputs.number }}" =~ ^[0-9]+$ ]]; then
+          echo "❌ 错误：number 必须是正整数"
+          exit 1
+        fi
+        
+        if [[ "${{ inputs.number }}" -gt 1000 ]]; then
+          echo "❌ 错误：number 不能超过1000"
+          exit 1
+        fi
+        
+        echo "✅ 输入验证通过：将打印 1 到 ${{ inputs.number }}"
+        
+    - name: 打印数字
+      id: print
+      shell: bash
+      run: |
+        NUMBER=${{ inputs.number }}
+        PREFIX="${{ inputs.prefix }}"
+        FORMAT="${{ inputs.format }}"
+        
+        echo "🔢 开始打印数字..."
+        echo "📋 配置："
+        echo "  - 数字范围: 1 到 $NUMBER"
+        echo "  - 前缀: '$PREFIX'"
+        echo "  - 格式: $FORMAT"
+        echo ""
+        
+        case $FORMAT in
+          "json")
+            echo "📄 JSON 格式输出："
+            echo -n '{"numbers": ['
+            for ((i=1; i<=NUMBER; i++)); do
+              if [[ $i -eq 1 ]]; then
+                echo -n "$i"
+              else
+                echo -n ", $i"
+              fi
+            done
+            echo ']}'
+            
+            # 设置输出
+            RESULT_JSON='{"numbers": ['
+            for ((i=1; i<=NUMBER; i++)); do
+              if [[ $i -eq 1 ]]; then
+                RESULT_JSON="${RESULT_JSON}$i"
+              else
+                RESULT_JSON="${RESULT_JSON}, $i"
+              fi
+            done
+            RESULT_JSON="${RESULT_JSON}]}"
+            echo "result=$RESULT_JSON" >> $GITHUB_OUTPUT
+            ;;
+            
+          "csv")
+            echo "📄 CSV 格式输出："
+            CSV_RESULT=""
+            for ((i=1; i<=NUMBER; i++)); do
+              if [[ $i -eq 1 ]]; then
+                CSV_RESULT="$i"
+              else
+                CSV_RESULT="${CSV_RESULT},$i"
+              fi
+            done
+            echo "$CSV_RESULT"
+            echo "result=$CSV_RESULT" >> $GITHUB_OUTPUT
+            ;;
+            
+          *)
+            echo "📄 列表格式输出："
+            LIST_RESULT=""
+            for ((i=1; i<=NUMBER; i++)); do
+              echo "${PREFIX}$i"
+              if [[ -z "$LIST_RESULT" ]]; then
+                LIST_RESULT="$i"
+              else
+                LIST_RESULT="${LIST_RESULT} $i"
+              fi
+            done
+            echo "result=$LIST_RESULT" >> $GITHUB_OUTPUT
+            ;;
+        esac
+        
+        echo "count=$NUMBER" >> $GITHUB_OUTPUT
+        
+    - name: 创建摘要
+      shell: bash
+      run: |
+        echo "## 🔢 数字打印完成" >> $GITHUB_STEP_SUMMARY
+        echo "- **范围**: 1 到 ${{ inputs.number }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **总数**: ${{ steps.print.outputs.count }} 个数字" >> $GITHUB_STEP_SUMMARY
+        echo "- **格式**: ${{ inputs.format }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **前缀**: '${{ inputs.prefix }}'" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ inputs.number }}" -le 20 ]]; then
+          echo "### 📋 输出预览" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.print.outputs.result }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### 📋 输出预览 (前10个数字)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          for ((i=1; i<=10; i++)); do
+            echo "${{ inputs.prefix }}$i"
+          done >> $GITHUB_STEP_SUMMARY
+          echo "... (还有 $((${{ inputs.number }} - 10)) 个数字)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ 任务完成时间: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
