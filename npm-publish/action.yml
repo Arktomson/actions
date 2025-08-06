@@ -1,10 +1,9 @@
 name: 'NPM Publisher'
 description: '发布 NPM 包到注册表'
-author: 'Arktomson'
 
 branding:
-  icon: 'upload'
-  color: 'red'
+  icon: 'package'
+  color: 'blue'
 
 inputs:
   version:

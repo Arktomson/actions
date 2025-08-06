@@ -1,6 +1,5 @@
 name: 'VS Code Marketplace Publisher'
 description: '发布 VS Code 扩展到官方市场'
-author: 'Arktomson'
 
 branding:
   icon: 'package'

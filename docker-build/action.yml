@@ -1,6 +1,5 @@
 name: 'Docker Builder'
 description: '构建和推送 Docker 镜像'
-author: 'Arktomson'
 
 branding:
   icon: 'layers'

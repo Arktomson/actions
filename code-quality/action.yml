@@ -1,0 +1,457 @@
+name: 'Code Quality Checker'
+description: '全面的代码质量检查工具 - 包含 Lint、测试、类型检查和安全审计'
+author: 'Arktomson'
+
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  node_version:
+    description: 'Node.js 版本'
+    required: false
+    default: '18'
+  package_path:
+    description: 'package.json 文件路径'
+    required: false
+    default: './package.json'
+  enable_lint:
+    description: '启用代码检查 (ESLint/Prettier)'
+    required: false
+    default: 'true'
+  enable_test:
+    description: '启用测试'
+    required: false
+    default: 'true'
+  enable_typecheck:
+    description: '启用类型检查 (TypeScript)'
+    required: false
+    default: 'true'
+  enable_audit:
+    description: '启用安全审计'
+    required: false
+    default: 'true'
+  enable_coverage:
+    description: '启用代码覆盖率检查'
+    required: false
+    default: 'true'
+  coverage_threshold:
+    description: '最低代码覆盖率阈值 (%)'
+    required: false
+    default: '80'
+  working_directory:
+    description: '工作目录'
+    required: false
+    default: '.'
+  fail_on_error:
+    description: '当检查失败时是否使 Action 失败'
+    required: false
+    default: 'true'
+  custom_lint_command:
+    description: '自定义 Lint 命令'
+    required: false
+  custom_test_command:
+    description: '自定义测试命令'
+    required: false
+  custom_typecheck_command:
+    description: '自定义类型检查命令'
+    required: false
+
+outputs:
+  lint_result:
+    description: 'Lint 检查结果 (success/failure)'
+  test_result:
+    description: '测试结果 (success/failure)'
+  typecheck_result:
+    description: '类型检查结果 (success/failure)'
+  audit_result:
+    description: '安全审计结果 (success/failure)'
+  coverage_result:
+    description: '代码覆盖率结果 (success/failure)'
+  coverage_percentage:
+    description: '代码覆盖率百分比'
+  total_score:
+    description: '总体质量得分 (0-100)'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node_version }}
+        cache: 'npm'
+        cache-dependency-path: ${{ inputs.package_path }}
+        
+    - name: 检查项目配置
+      id: check_config
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        echo "🔍 检查项目配置..."
+        
+        # 检查 package.json 是否存在
+        if [[ ! -f "${{ inputs.package_path }}" ]]; then
+          echo "❌ package.json 文件不存在: ${{ inputs.package_path }}"
+          exit 1
+        fi
+        
+        # 检查是否为 TypeScript 项目
+        HAS_TYPESCRIPT="false"
+        if [[ -f "tsconfig.json" ]] || grep -q '"typescript"' "${{ inputs.package_path }}"; then
+          HAS_TYPESCRIPT="true"
+        fi
+        echo "has_typescript=$HAS_TYPESCRIPT" >> $GITHUB_OUTPUT
+        
+        # 检查是否有测试脚本
+        HAS_TEST_SCRIPT="false"
+        if grep -q '"test"' "${{ inputs.package_path }}"; then
+          HAS_TEST_SCRIPT="true"
+        fi
+        echo "has_test_script=$HAS_TEST_SCRIPT" >> $GITHUB_OUTPUT
+        
+        # 检查是否有 lint 脚本
+        HAS_LINT_SCRIPT="false"
+        if grep -q '"lint"' "${{ inputs.package_path }}"; then
+          HAS_LINT_SCRIPT="true"
+        fi
+        echo "has_lint_script=$HAS_LINT_SCRIPT" >> $GITHUB_OUTPUT
+        
+        echo "✅ 项目配置检查完成"
+        echo "- TypeScript: $HAS_TYPESCRIPT"
+        echo "- 测试脚本: $HAS_TEST_SCRIPT"
+        echo "- Lint 脚本: $HAS_LINT_SCRIPT"
+        
+    - name: 安装依赖
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        echo "📦 安装项目依赖..."
+        
+        if [[ -f "package-lock.json" ]]; then
+          npm ci
+        elif [[ -f "yarn.lock" ]]; then
+          yarn install --frozen-lockfile
+        elif [[ -f "pnpm-lock.yaml" ]]; then
+          npx pnpm install --frozen-lockfile
+        else
+          npm install
+        fi
+        
+        echo "✅ 依赖安装完成"
+        
+    - name: 代码 Lint 检查
+      if: inputs.enable_lint == 'true'
+      id: lint
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        echo "🔍 开始 Lint 检查..."
+        
+        LINT_RESULT="success"
+        
+        if [[ -n "${{ inputs.custom_lint_command }}" ]]; then
+          echo "使用自定义 Lint 命令: ${{ inputs.custom_lint_command }}"
+          if ! ${{ inputs.custom_lint_command }}; then
+            LINT_RESULT="failure"
+          fi
+        elif [[ "${{ steps.check_config.outputs.has_lint_script }}" == "true" ]]; then
+          echo "使用项目 Lint 脚本..."
+          if ! npm run lint; then
+            LINT_RESULT="failure"
+          fi
+        else
+          echo "尝试使用 ESLint..."
+          if command -v npx eslint &> /dev/null; then
+            if ! npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0; then
+              LINT_RESULT="failure"
+            fi
+          else
+            echo "⚠️ 未找到 ESLint 配置，跳过 Lint 检查"
+            LINT_RESULT="skipped"
+          fi
+        fi
+        
+        echo "lint_result=$LINT_RESULT" >> $GITHUB_OUTPUT
+        
+        if [[ "$LINT_RESULT" == "success" ]]; then
+          echo "✅ Lint 检查通过"
+        elif [[ "$LINT_RESULT" == "failure" ]]; then
+          echo "❌ Lint 检查失败"
+          if [[ "${{ inputs.fail_on_error }}" == "true" ]]; then
+            exit 1
+          fi
+        fi
+        
+    - name: 运行测试
+      if: inputs.enable_test == 'true'
+      id: test
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        echo "🧪 开始运行测试..."
+        
+        TEST_RESULT="success"
+        COVERAGE_PERCENTAGE="0"
+        
+        if [[ -n "${{ inputs.custom_test_command }}" ]]; then
+          echo "使用自定义测试命令: ${{ inputs.custom_test_command }}"
+          if ! ${{ inputs.custom_test_command }}; then
+            TEST_RESULT="failure"
+          fi
+        elif [[ "${{ steps.check_config.outputs.has_test_script }}" == "true" ]]; then
+          echo "使用项目测试脚本..."
+          if [[ "${{ inputs.enable_coverage }}" == "true" ]]; then
+            # 尝试运行带覆盖率的测试
+            if npm run test -- --coverage || npm run test:coverage 2>/dev/null; then
+              echo "✅ 测试运行成功 (带覆盖率)"
+              
+              # 尝试读取覆盖率信息
+              if [[ -f "coverage/lcov-report/index.html" ]]; then
+                COVERAGE_PERCENTAGE=$(grep -o '[0-9]\+\.[0-9]\+%' coverage/lcov-report/index.html | head -1 | sed 's/%//' || echo "0")
+              elif [[ -f "coverage/coverage-summary.json" ]]; then
+                COVERAGE_PERCENTAGE=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf8')).total.lines.pct" 2>/dev/null || echo "0")
+              fi
+            elif npm run test; then
+              echo "✅ 测试运行成功 (无覆盖率)"
+            else
+              TEST_RESULT="failure"
+            fi
+          else
+            if ! npm run test; then
+              TEST_RESULT="failure"
+            fi
+          fi
+        else
+          echo "⚠️ 未找到测试脚本，跳过测试"
+          TEST_RESULT="skipped"
+        fi
+        
+        echo "test_result=$TEST_RESULT" >> $GITHUB_OUTPUT
+        echo "coverage_percentage=$COVERAGE_PERCENTAGE" >> $GITHUB_OUTPUT
+        
+        # 检查覆盖率阈值
+        COVERAGE_RESULT="success"
+        if [[ "${{ inputs.enable_coverage }}" == "true" ]] && [[ "$TEST_RESULT" == "success" ]]; then
+          if (( $(echo "$COVERAGE_PERCENTAGE >= ${{ inputs.coverage_threshold }}" | bc -l) )); then
+            echo "✅ 代码覆盖率: ${COVERAGE_PERCENTAGE}% (阈值: ${{ inputs.coverage_threshold }}%)"
+          else
+            echo "❌ 代码覆盖率不足: ${COVERAGE_PERCENTAGE}% < ${{ inputs.coverage_threshold }}%"
+            COVERAGE_RESULT="failure"
+            if [[ "${{ inputs.fail_on_error }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        fi
+        echo "coverage_result=$COVERAGE_RESULT" >> $GITHUB_OUTPUT
+        
+        if [[ "$TEST_RESULT" == "failure" ]]; then
+          echo "❌ 测试失败"
+          if [[ "${{ inputs.fail_on_error }}" == "true" ]]; then
+            exit 1
+          fi
+        fi
+        
+    - name: TypeScript 类型检查
+      if: inputs.enable_typecheck == 'true' && steps.check_config.outputs.has_typescript == 'true'
+      id: typecheck
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        echo "🔧 开始 TypeScript 类型检查..."
+        
+        TYPECHECK_RESULT="success"
+        
+        if [[ -n "${{ inputs.custom_typecheck_command }}" ]]; then
+          echo "使用自定义类型检查命令: ${{ inputs.custom_typecheck_command }}"
+          if ! ${{ inputs.custom_typecheck_command }}; then
+            TYPECHECK_RESULT="failure"
+          fi
+        elif grep -q '"typecheck"' "${{ inputs.package_path }}"; then
+          echo "使用项目类型检查脚本..."
+          if ! npm run typecheck; then
+            TYPECHECK_RESULT="failure"
+          fi
+        else
+          echo "使用 tsc 进行类型检查..."
+          if ! npx tsc --noEmit; then
+            TYPECHECK_RESULT="failure"
+          fi
+        fi
+        
+        echo "typecheck_result=$TYPECHECK_RESULT" >> $GITHUB_OUTPUT
+        
+        if [[ "$TYPECHECK_RESULT" == "success" ]]; then
+          echo "✅ TypeScript 类型检查通过"
+        else
+          echo "❌ TypeScript 类型检查失败"
+          if [[ "${{ inputs.fail_on_error }}" == "true" ]]; then
+            exit 1
+          fi
+        fi
+        
+    - name: 安全审计
+      if: inputs.enable_audit == 'true'
+      id: audit
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        echo "🔒 开始安全审计..."
+        
+        AUDIT_RESULT="success"
+        
+        # NPM 审计
+        echo "运行 npm audit..."
+        if ! npm audit --audit-level=moderate; then
+          echo "⚠️ 发现安全漏洞"
+          
+          # 尝试自动修复
+          echo "尝试自动修复..."
+          if npm audit fix; then
+            echo "✅ 部分漏洞已自动修复"
+            # 再次检查
+            if ! npm audit --audit-level=moderate; then
+              AUDIT_RESULT="failure"
+            fi
+          else
+            AUDIT_RESULT="failure"
+          fi
+        fi
+        
+        # 如果有 Yarn，也运行 Yarn 审计
+        if [[ -f "yarn.lock" ]] && command -v yarn &> /dev/null; then
+          echo "运行 yarn audit..."
+          if ! yarn audit --level moderate; then
+            AUDIT_RESULT="failure"
+          fi
+        fi
+        
+        echo "audit_result=$AUDIT_RESULT" >> $GITHUB_OUTPUT
+        
+        if [[ "$AUDIT_RESULT" == "success" ]]; then
+          echo "✅ 安全审计通过"
+        else
+          echo "❌ 安全审计发现问题"
+          if [[ "${{ inputs.fail_on_error }}" == "true" ]]; then
+            exit 1
+          fi
+        fi
+        
+    - name: 计算质量得分
+      id: score
+      shell: bash
+      run: |
+        echo "📊 计算代码质量得分..."
+        
+        TOTAL_SCORE=0
+        TOTAL_CHECKS=0
+        
+        # Lint 检查
+        if [[ "${{ inputs.enable_lint }}" == "true" ]]; then
+          TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
+          if [[ "${{ steps.lint.outputs.lint_result }}" == "success" ]]; then
+            TOTAL_SCORE=$((TOTAL_SCORE + 25))
+          fi
+        fi
+        
+        # 测试检查
+        if [[ "${{ inputs.enable_test }}" == "true" ]]; then
+          TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
+          if [[ "${{ steps.test.outputs.test_result }}" == "success" ]]; then
+            TOTAL_SCORE=$((TOTAL_SCORE + 25))
+          fi
+        fi
+        
+        # 类型检查
+        if [[ "${{ inputs.enable_typecheck }}" == "true" ]] && [[ "${{ steps.check_config.outputs.has_typescript }}" == "true" ]]; then
+          TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
+          if [[ "${{ steps.typecheck.outputs.typecheck_result }}" == "success" ]]; then
+            TOTAL_SCORE=$((TOTAL_SCORE + 25))
+          fi
+        fi
+        
+        # 安全审计
+        if [[ "${{ inputs.enable_audit }}" == "true" ]]; then
+          TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
+          if [[ "${{ steps.audit.outputs.audit_result }}" == "success" ]]; then
+            TOTAL_SCORE=$((TOTAL_SCORE + 25))
+          fi
+        fi
+        
+        # 计算最终得分 (0-100)
+        if [[ $TOTAL_CHECKS -gt 0 ]]; then
+          FINAL_SCORE=$((TOTAL_SCORE * 100 / (TOTAL_CHECKS * 25)))
+        else
+          FINAL_SCORE=0
+        fi
+        
+        echo "total_score=$FINAL_SCORE" >> $GITHUB_OUTPUT
+        echo "📊 代码质量得分: $FINAL_SCORE/100"
+        
+    - name: 创建质量报告
+      shell: bash
+      run: |
+        echo "## 📋 代码质量检查报告" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🎯 总体得分: ${{ steps.score.outputs.total_score }}/100" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 检查结果" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Lint 检查结果
+        if [[ "${{ inputs.enable_lint }}" == "true" ]]; then
+          if [[ "${{ steps.lint.outputs.lint_result }}" == "success" ]]; then
+            echo "- ✅ **代码风格检查**: 通过" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ steps.lint.outputs.lint_result }}" == "failure" ]]; then
+            echo "- ❌ **代码风格检查**: 失败" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⏭️ **代码风格检查**: 跳过" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        # 测试结果
+        if [[ "${{ inputs.enable_test }}" == "true" ]]; then
+          if [[ "${{ steps.test.outputs.test_result }}" == "success" ]]; then
+            echo "- ✅ **单元测试**: 通过" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ inputs.enable_coverage }}" == "true" ]] && [[ -n "${{ steps.test.outputs.coverage_percentage }}" ]]; then
+              echo "  - 代码覆盖率: ${{ steps.test.outputs.coverage_percentage }}%" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [[ "${{ steps.test.outputs.test_result }}" == "failure" ]]; then
+            echo "- ❌ **单元测试**: 失败" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⏭️ **单元测试**: 跳过" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        # 类型检查结果
+        if [[ "${{ inputs.enable_typecheck }}" == "true" ]] && [[ "${{ steps.check_config.outputs.has_typescript }}" == "true" ]]; then
+          if [[ "${{ steps.typecheck.outputs.typecheck_result }}" == "success" ]]; then
+            echo "- ✅ **类型检查**: 通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **类型检查**: 失败" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        # 安全审计结果
+        if [[ "${{ inputs.enable_audit }}" == "true" ]]; then
+          if [[ "${{ steps.audit.outputs.audit_result }}" == "success" ]]; then
+            echo "- ✅ **安全审计**: 通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **安全审计**: 发现问题" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ⚙️ 配置信息" >> $GITHUB_STEP_SUMMARY
+        echo "- **Node.js 版本**: ${{ inputs.node_version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **工作目录**: ${{ inputs.working_directory }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **TypeScript 项目**: ${{ steps.check_config.outputs.has_typescript == 'true' && '是' || '否' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **失败时退出**: ${{ inputs.fail_on_error == 'true' && '是' || '否' }}" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ inputs.enable_coverage }}" == "true" ]]; then
+          echo "- **覆盖率阈值**: ${{ inputs.coverage_threshold }}%" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "*报告时间: $(date -u +'%Y-%m-%d %H:%M:%S UTC')*" >> $GITHUB_STEP_SUMMARY

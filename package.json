@@ -1,7 +1,7 @@
 {
-  "name": "@arktomson/github-actions",
+  "name": "@your-org/github-actions",
   "version": "1.0.0",
-  "description": "ZCY Actions Toolkit - 实用的 GitHub Actions 工具集",
+  "description": "Universal GitHub Actions Toolkit - 实用的 GitHub Actions 工具集，支持 NPM 发布、VS Code 扩展发布、Docker 构建、版本管理和代码质量检查",
   "keywords": [
     "github-actions",
     "vscode",
@@ -9,17 +9,21 @@
     "docker",
     "release",
     "publish",
-    "automation"
+    "automation",
+    "ci-cd",
+    "code-quality",
+    "typescript",
+    "javascript"
   ],
-  "author": "Arktomson <arktomson@example.com>",
+  "author": "GitHub Actions Community",
   "license": "MIT",
-  "homepage": "https://github.com/Arktomson/actions#readme",
+  "homepage": "https://github.com/your-org/github-actions#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Arktomson/actions.git"
+    "url": "git+https://github.com/your-org/github-actions.git"
   },
   "bugs": {
-    "url": "https://github.com/Arktomson/actions/issues"
+    "url": "https://github.com/your-org/github-actions/issues"
   },
   "engines": {
     "node": ">=16"
