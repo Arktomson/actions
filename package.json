@@ -1,0 +1,27 @@
+{
+  "name": "@arktomson/github-actions",
+  "version": "1.0.0",
+  "description": "ZCY Actions Toolkit - 实用的 GitHub Actions 工具集",
+  "keywords": [
+    "github-actions",
+    "vscode",
+    "npm",
+    "docker",
+    "release",
+    "publish",
+    "automation"
+  ],
+  "author": "Arktomson <arktomson@example.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/Arktomson/actions#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Arktomson/actions.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Arktomson/actions/issues"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

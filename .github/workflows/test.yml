@@ -1,0 +1,118 @@
+name: Test Actions
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-vscode-action:
+    runs-on: ubuntu-latest
+    if: false  # 禁用实际测试，避免意外发布
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create test package.json
+        run: |
+          cat > package.json << 'EOF'
+          {
+            "name": "test-extension",
+            "version": "0.0.1-test",
+            "publisher": "test-publisher",
+            "engines": {
+              "vscode": "^1.60.0"
+            }
+          }
+          EOF
+          
+      - name: Test VS Code Publisher
+        uses: ./vscode-marketplace-publish
+        with:
+          pat: ${{ secrets.VSCODE_PAT }}
+          skip_duplicate: true
+
+  test-npm-action:
+    runs-on: ubuntu-latest
+    if: false  # 禁用实际测试，避免意外发布
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create test package.json
+        run: |
+          cat > package.json << 'EOF'
+          {
+            "name": "@test/test-package",
+            "version": "0.0.1-test",
+            "description": "Test package",
+            "main": "index.js",
+            "scripts": {
+              "test": "echo \"Test passed\""
+            }
+          }
+          EOF
+          
+      - name: Test NPM Publisher
+        uses: ./npm-publish
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          dist_tag: 'test'
+
+  validate-actions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate VS Code Action
+        run: |
+          if [ ! -f "vscode-marketplace-publish/action.yml" ]; then
+            echo "❌ VS Code action.yml not found"
+            exit 1
+          fi
+          echo "✅ VS Code Action validated"
+          
+      - name: Validate NPM Action
+        run: |
+          if [ ! -f "npm-publish/action.yml" ]; then
+            echo "❌ NPM action.yml not found"
+            exit 1
+          fi
+          echo "✅ NPM Action validated"
+          
+      - name: Validate Release Manager Action
+        run: |
+          if [ ! -f "release-manager/action.yml" ]; then
+            echo "❌ Release Manager action.yml not found"
+            exit 1
+          fi
+          echo "✅ Release Manager Action validated"
+          
+      - name: Validate Docker Action
+        run: |
+          if [ ! -f "docker-build/action.yml" ]; then
+            echo "❌ Docker action.yml not found"
+            exit 1
+          fi
+          echo "✅ Docker Action validated"
+
+  lint-yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Lint YAML files
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: |
+            vscode-marketplace-publish/action.yml
+            npm-publish/action.yml  
+            release-manager/action.yml
+            docker-build/action.yml
+            examples/
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 120
+              indentation:
+                spaces: 2

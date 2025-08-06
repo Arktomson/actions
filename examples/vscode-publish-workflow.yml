@@ -1,0 +1,64 @@
+# VS Code Extension 发布工作流示例
+name: Publish VS Code Extension
+
+on:
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '发布版本号 (可选)'
+        required: false
+        type: string
+      pre_release:
+        description: '是否为预发布版本'
+        required: false
+        type: boolean
+        default: false
+
+  # Tag 推送时自动触发
+  push:
+    tags:
+      - 'v*'
+
+  # Release 发布时触发
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: 安装依赖
+        run: npm ci
+        
+      - name: 运行测试
+        run: npm test
+        
+      - name: 构建扩展
+        run: npm run build
+        
+      - name: 发布到 VS Code Marketplace
+        uses: Arktomson/actions/vscode-marketplace-publish@v1
+        with:
+          version: ${{ github.event.inputs.version }}
+          pre_release: ${{ github.event.inputs.pre_release }}
+          pat: ${{ secrets.VSCODE_PAT }}
+          
+      - name: 通知结果
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ 扩展发布成功！"
+          else
+            echo "❌ 扩展发布失败！"
+          fi
