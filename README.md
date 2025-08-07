@@ -1,4 +1,4 @@
-# GitHub Actions Toolkit
+# General Actions Toolkit
 
 A collection of useful GitHub Actions for common development and deployment tasks.
 

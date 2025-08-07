@@ -1,5 +1,5 @@
-name: 'GitHub Actions Toolkit'
-description: 'Collection of useful GitHub Actions for common development tasks'
+name: 'General Actions Toolkit'
+description: 'general actions,vscode plugin publish and more,please read README.md'
 
 branding:
   icon: 'zap'
