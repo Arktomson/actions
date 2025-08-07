@@ -1,60 +1,60 @@
 # GitHub Actions Toolkit
 
-实用的 GitHub Actions 工具集，包含常用的开发和部署任务。
+A collection of useful GitHub Actions for common development and deployment tasks.
 
-## 🚀 快速使用
+## 🚀 Quick Start
 
-### 直接使用单个Action（推荐）
+### Direct Individual Action Usage (Recommended)
 
 ```yaml
-# NPM发布
+# NPM Publishing
 - uses: Arktomson/actions/npm-publish@v0
   with:
     token: ${{ secrets.NPM_TOKEN }}
     version: patch
 
-# VS Code扩展发布
+# VS Code Extension Publishing
 - uses: Arktomson/actions/vscode-marketplace-publish@v0
   with:
     pat: ${{ secrets.VSCODE_PAT }}
 
-# Docker构建  
+# Docker Build  
 - uses: Arktomson/actions/docker-build@v0
   with:
     image_name: myapp
     username: ${{ secrets.DOCKER_USERNAME }}
     password: ${{ secrets.DOCKER_PASSWORD }}
 
-# 版本发布
+# Release Management
 - uses: Arktomson/actions/release-manager@v0
   with:
     tag_name: v1.0.0
 
-# 代码质量检查
+# Code Quality Check
 - uses: Arktomson/actions/code-quality@v0
   with:
     enable_lint: true
     enable_test: true
 
-# 测试用Action（打印数字）
+# Test Action (Print Numbers)
 - uses: Arktomson/actions/print-numbers@v0
   with:
     number: 20
     format: json
 ```
 
-## 📦 包含的Actions
+## 📦 Available Actions
 
-- **npm-publish** - NPM包发布
-- **vscode-marketplace-publish** - VS Code扩展发布
-- **docker-build** - Docker镜像构建和推送
-- **release-manager** - GitHub Release管理
-- **code-quality** - 代码质量检查
-- **print-numbers** - 测试用Action（打印1到n的数字）
+- **npm-publish** - NPM package publishing
+- **vscode-marketplace-publish** - VS Code extension publishing
+- **docker-build** - Docker image build and push
+- **release-manager** - GitHub Release management
+- **code-quality** - Code quality checks (lint, test, typecheck, audit)
+- **print-numbers** - Test action (prints numbers from 1 to n)
 
-## 📝 使用示例
+## 📝 Usage Examples
 
-### 完整的发布流程
+### Complete Release Workflow
 ```yaml
 name: Release
 on:
@@ -67,13 +67,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # 代码质量检查
-      - uses: your-org/actions/code-quality@v1
+      # Code quality check
+      - uses: Arktomson/actions/code-quality@v0
         with:
           enable_lint: true
           enable_test: true
       
-      # 构建 Docker 镜像
+      # Build Docker image
       - uses: Arktomson/actions/docker-build@v0
         with:
           image_name: myapp
@@ -81,20 +81,20 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-      # 发布 NPM 包
+      # Publish NPM package
       - uses: Arktomson/actions/npm-publish@v0
         with:
           token: ${{ secrets.NPM_TOKEN }}
           version: ${{ github.ref_name }}
       
-      # 创建 Release
+      # Create Release
       - uses: Arktomson/actions/release-manager@v0
         with:
           tag_name: ${{ github.ref_name }}
           generate_notes: true
 ```
 
-### VS Code 扩展发布
+### VS Code Extension Publishing
 ```yaml
 name: Publish Extension
 on:
@@ -111,29 +111,29 @@ jobs:
           pat: ${{ secrets.VSCODE_PAT }}
 ```
 
-## 🔧 项目结构
+## 🔧 Project Structure
 
 ```
 actions/
-├── action.yml                          # 主入口Action
-├── npm-publish/action.yml              # NPM发布
-├── vscode-marketplace-publish/         # VS Code扩展发布
-├── docker-build/action.yml             # Docker构建
-├── release-manager/action.yml          # Release管理
-├── code-quality/action.yml             # 代码质量检查
-├── print-numbers/action.yml            # 测试用Action
+├── action.yml                          # Main entry action
+├── npm-publish/action.yml              # NPM publishing
+├── vscode-marketplace-publish/         # VS Code extension publishing
+├── docker-build/action.yml             # Docker build
+├── release-manager/action.yml          # Release management
+├── code-quality/action.yml             # Code quality checks
+├── print-numbers/action.yml            # Test action
 └── README.md
 ```
 
-## 🚀 发布和使用
+## 🚀 Publishing and Usage
 
-### 发布到GitHub
-1. 推送代码到GitHub仓库
-2. 创建标签：`git tag v1.0.0 && git push origin v1.0.0`
-3. 用户就可以使用了！
+### Publishing to GitHub
+1. Push code to GitHub repository
+2. Create tag: `git tag v1.0.0 && git push origin v1.0.0`
+3. Users can now use your actions!
 
-### 实际使用示例
-用户在他们的工作流中这样使用：
+### Real Usage Example
+Users can use these actions in their workflows like this:
 
 ```yaml
 name: My Workflow
@@ -145,20 +145,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # 使用您的NPM发布Action
+      # Use your NPM publishing action
       - uses: Arktomson/actions/npm-publish@v0
         with:
           token: ${{ secrets.NPM_TOKEN }}
           version: patch
           
-      # 使用您的Docker构建Action
+      # Use your Docker build action
       - uses: Arktomson/actions/docker-build@v0
         with:
           image_name: myapp
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-      # 测试Action示例
+      # Test action example
       - uses: Arktomson/actions/print-numbers@v0
         with:
           number: 100
@@ -166,14 +166,14 @@ jobs:
           format: list
 ```
 
-## 📖 详细参数说明
+## 📖 Detailed Parameters
 
-每个Action的完整参数说明请查看对应目录下的`action.yml`文件。
+For complete parameter documentation for each action, please refer to the `action.yml` file in each action's directory.
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
 
-## 📄 许可证
+## 📄 License
 
 MIT License

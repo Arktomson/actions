@@ -1,6 +1,6 @@
-name: 'GitHub Actions Entry'
-description: 'only as a fake entry point for publish,please use sub actions instead'
+name: 'GitHub Actions Toolkit'
+description: 'Collection of useful GitHub Actions for common development tasks'
 
 branding:
-  icon: 'package'
-  color: 'blue'
+  icon: 'zap'
+  color: 'purple'
