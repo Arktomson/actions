@@ -2,84 +2,42 @@
 
 实用的 GitHub Actions 工具集，包含常用的开发和部署任务。
 
-> **使用说明**：将下面示例中的 `{owner}/{repo}` 替换为您的实际GitHub用户名和仓库名。  
-> 例如：`john/my-actions/npm-publish@v1`
-
 ## 🚀 快速使用
 
-### 方式一：使用主Action（推荐）
+### 直接使用单个Action（推荐）
 
 ```yaml
 # NPM发布
-- uses: {owner}/{repo}@v1
-  with:
-    action: npm-publish
-    npm_token: ${{ secrets.NPM_TOKEN }}
-    npm_version: patch
-
-# VS Code扩展发布
-- uses: {owner}/{repo}@v1
-  with:
-    action: vscode-publish
-    vscode_pat: ${{ secrets.VSCODE_PAT }}
-
-# Docker构建
-- uses: {owner}/{repo}@v1
-  with:
-    action: docker-build
-    docker_image_name: myapp
-    docker_username: ${{ secrets.DOCKER_USERNAME }}
-    docker_password: ${{ secrets.DOCKER_PASSWORD }}
-
-# 代码质量检查
-- uses: {owner}/{repo}@v1
-  with:
-    action: code-quality
-    enable_lint: true
-    enable_test: true
-
-# 测试用Action（打印数字）
-- uses: {owner}/{repo}@v1
-  with:
-    action: print-numbers
-    test_number: 20
-    test_format: json
-```
-
-### 方式二：直接使用单个Action（推荐）
-
-```yaml
-# NPM发布
-- uses: {owner}/{repo}/npm-publish@v1
+- uses: Arktomson/actions/npm-publish@v0
   with:
     token: ${{ secrets.NPM_TOKEN }}
     version: patch
 
 # VS Code扩展发布
-- uses: {owner}/{repo}/vscode-marketplace-publish@v1
+- uses: Arktomson/actions/vscode-marketplace-publish@v0
   with:
     pat: ${{ secrets.VSCODE_PAT }}
 
 # Docker构建  
-- uses: {owner}/{repo}/docker-build@v1
+- uses: Arktomson/actions/docker-build@v0
   with:
     image_name: myapp
     username: ${{ secrets.DOCKER_USERNAME }}
     password: ${{ secrets.DOCKER_PASSWORD }}
 
 # 版本发布
-- uses: {owner}/{repo}/release-manager@v1
+- uses: Arktomson/actions/release-manager@v0
   with:
     tag_name: v1.0.0
 
 # 代码质量检查
-- uses: {owner}/{repo}/code-quality@v1
+- uses: Arktomson/actions/code-quality@v0
   with:
     enable_lint: true
     enable_test: true
 
 # 测试用Action（打印数字）
-- uses: {owner}/{repo}/print-numbers@v1
+- uses: Arktomson/actions/print-numbers@v0
   with:
     number: 20
     format: json
@@ -116,7 +74,7 @@ jobs:
           enable_test: true
       
       # 构建 Docker 镜像
-      - uses: {owner}/{repo}/docker-build@v1
+      - uses: Arktomson/actions/docker-build@v0
         with:
           image_name: myapp
           tag: ${{ github.ref_name }}
@@ -124,13 +82,13 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       
       # 发布 NPM 包
-      - uses: {owner}/{repo}/npm-publish@v1
+      - uses: Arktomson/actions/npm-publish@v0
         with:
           token: ${{ secrets.NPM_TOKEN }}
           version: ${{ github.ref_name }}
       
       # 创建 Release
-      - uses: {owner}/{repo}/release-manager@v1
+      - uses: Arktomson/actions/release-manager@v0
         with:
           tag_name: ${{ github.ref_name }}
           generate_notes: true
@@ -148,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: {owner}/{repo}/vscode-marketplace-publish@v1
+      - uses: Arktomson/actions/vscode-marketplace-publish@v0
         with:
           pat: ${{ secrets.VSCODE_PAT }}
 ```
@@ -188,20 +146,20 @@ jobs:
       - uses: actions/checkout@v4
       
       # 使用您的NPM发布Action
-      - uses: {owner}/{repo}/npm-publish@v1
+      - uses: Arktomson/actions/npm-publish@v0
         with:
           token: ${{ secrets.NPM_TOKEN }}
           version: patch
           
       # 使用您的Docker构建Action
-      - uses: {owner}/{repo}/docker-build@v1
+      - uses: Arktomson/actions/docker-build@v0
         with:
           image_name: myapp
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
       # 测试Action示例
-      - uses: {owner}/{repo}/print-numbers@v1
+      - uses: Arktomson/actions/print-numbers@v0
         with:
           number: 100
           prefix: "Item: "

@@ -1,0 +1,38 @@
+name: Quick Test
+on:
+  workflow_dispatch:  # 手动触发，方便您测试
+
+jobs:
+  test-print-numbers:
+    runs-on: ubuntu-latest
+    name: Test Print Numbers
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Test basic functionality
+        uses: ./print-numbers
+        with:
+          number: 5
+          prefix: "Test: "
+          format: list
+          
+      - name: Test JSON output
+        uses: ./print-numbers  
+        with:
+          number: 3
+          format: json
+
+  test-main-action:
+    runs-on: ubuntu-latest
+    name: Test Main Action
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Test via main action
+        uses: ./
+        with:
+          action: print-numbers
+          test_number: 10
+          test_format: csv

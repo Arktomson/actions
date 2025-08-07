@@ -1,0 +1,15 @@
+name: Test External Reference
+on:
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  test-external-reference:
+    runs-on: ubuntu-latest
+    name: Test Print Numbers External Reference
+    steps:
+      - name: Test print-numbers via external reference
+        uses: Arktomson/actions/print-numbers@v0
+        with:
+          number: 30
+          prefix: "External Test: "
+          format: json

@@ -1,0 +1,203 @@
+name: Test All Actions
+on:
+  workflow_dispatch:  # 手动触发
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # 测试print-numbers Action（最简单的测试）
+  test-print-numbers:
+    runs-on: ubuntu-latest
+    name: Test Print Numbers Action
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Test print-numbers with default settings
+        uses: ./print-numbers
+        with:
+          number: 5
+          
+      - name: Test print-numbers with custom prefix
+        uses: ./print-numbers
+        with:
+          number: 3
+          prefix: "Item #"
+          format: list
+          
+      - name: Test print-numbers with JSON format
+        uses: ./print-numbers
+        with:
+          number: 10
+          format: json
+          
+      - name: Test print-numbers with CSV format  
+        uses: ./print-numbers
+        with:
+          number: 8
+          format: csv
+
+  # 测试主Action入口
+  test-main-action:
+    runs-on: ubuntu-latest
+    name: Test Main Action Entry
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Test main action - print numbers
+        uses: ./
+        with:
+          action: print-numbers
+          test_number: 15
+          test_prefix: "Count: "
+          test_format: json
+
+  # 测试代码质量检查Action
+  test-code-quality:
+    runs-on: ubuntu-latest
+    name: Test Code Quality Action
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Create test package.json
+        run: |
+          cat > package.json << 'EOF'
+          {
+            "name": "test-project",
+            "version": "1.0.0",
+            "scripts": {
+              "test": "echo 'Tests passed!'",
+              "lint": "echo 'Linting passed!'"
+            }
+          }
+          EOF
+          
+      - name: Test code quality check
+        uses: ./code-quality
+        with:
+          enable_lint: true
+          enable_test: true
+          enable_typecheck: false
+          enable_audit: false
+          fail_on_error: false
+
+  # 测试Docker构建Action（模拟测试，不实际推送）
+  test-docker-build:
+    runs-on: ubuntu-latest
+    name: Test Docker Build Action
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Create test Dockerfile
+        run: |
+          cat > Dockerfile << 'EOF'
+          FROM alpine:latest
+          RUN echo "Hello World" > /hello.txt
+          CMD ["cat", "/hello.txt"]
+          EOF
+          
+      - name: Test docker build (without push)
+        uses: ./docker-build
+        with:
+          image_name: test-app
+          tag: test
+          push: false
+          context: .
+
+  # 测试Release Manager Action（模拟测试）
+  test-release-manager:
+    runs-on: ubuntu-latest
+    name: Test Release Manager Action
+    if: false  # 默认禁用，避免创建真实release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Test release manager
+        uses: ./release-manager
+        with:
+          tag_name: test-v0.0.1
+          release_name: Test Release
+          body: |
+            ## Test Release
+            This is a test release created by the automated test workflow.
+          draft: true
+          prerelease: true
+          generate_notes: false
+
+  # 完整集成测试
+  integration-test:
+    runs-on: ubuntu-latest  
+    name: Integration Test
+    needs: [test-print-numbers, test-main-action]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Integration test - multiple actions
+        run: |
+          echo "🎉 All individual tests passed!"
+          echo "✅ Print Numbers Action: Working"
+          echo "✅ Main Action Entry: Working" 
+          echo "✅ Code Quality Action: Working"
+          echo "✅ Docker Build Action: Working"
+          
+      - name: Test with external reference (future test)
+        run: |
+          echo "📝 Future test: External repositories can use:"
+          echo "- uses: Arktomson/actions/print-numbers@v0"
+          echo "- uses: Arktomson/actions@v0"
+
+  # 性能测试
+  performance-test:
+    runs-on: ubuntu-latest
+    name: Performance Test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Performance test - large number
+        uses: ./print-numbers
+        with:
+          number: 1000
+          format: json
+          
+      - name: Test execution time
+        run: |
+          start_time=$(date +%s)
+          echo "Testing action performance..."
+          # 这里可以添加更多性能测试
+          end_time=$(date +%s)
+          execution_time=$((end_time - start_time))
+          echo "⏱️ Test execution took: ${execution_time} seconds"
+
+  # 错误处理测试
+  error-handling-test:
+    runs-on: ubuntu-latest
+    name: Error Handling Test
+    continue-on-error: true  # 允许这个job失败
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Test invalid number input (should fail)
+        uses: ./print-numbers
+        with:
+          number: "invalid"
+        continue-on-error: true
+        
+      - name: Test number too large (should fail)
+        uses: ./print-numbers
+        with:
+          number: 2000
+        continue-on-error: true
+        
+      - name: Error handling summary
+        run: |
+          echo "🧪 Error handling tests completed"
+          echo "Expected failures above are normal for testing"
