@@ -1,3 +1,6 @@
 name: 'GitHub Actions Entry'
 description: 'only as a fake entry point for publish,please use sub actions instead'
 
+branding:
+  icon: 'package'
+  color: 'blue'
