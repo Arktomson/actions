@@ -29,11 +29,18 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
     - name: 设置 Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node_version }}
         cache: ${{ inputs.package_manager }}
+        cache-dependency-path: |
+          package-lock.json
+          yarn.lock
+          pnpm-lock.yaml
 
     - name: 安装依赖
       shell: bash
