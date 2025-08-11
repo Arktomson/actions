@@ -1,4 +1,6 @@
 
+## [1.0.1](https://github.com/Arktomson/actions/compare/v1.0.0...v1.0.1) (2025-08-11)
+
 # 1.0.0 (2025-08-11)
 ### 🔔 更新说明
 首次发布
@@ -20,6 +22,8 @@
 * readme改动 ([1d54218](https://github.com/Arktomson/actions/commit/1d54218eb70d5e21c53c74c18912263c91e09200))
 * vscode-workflow-yml ([83a4a96](https://github.com/Arktomson/actions/commit/83a4a965e5058bff9f7820de35f0ee51e10ad420))
 * 版本改为1.0.0 ([7f52b9b](https://github.com/Arktomson/actions/commit/7f52b9bb9535506a950eea5c5f8aa736de8bab68))
+
+
 
 
 ## Previous Changelogs
