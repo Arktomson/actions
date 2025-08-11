@@ -10,6 +10,6 @@ jobs:
       - name: Test print-numbers via external reference
         uses: Arktomson/actions/print-numbers@v1.0.0
         with:
-          number: 7
+          number: 88
           prefix: "External Test: "
           format: json
