@@ -1,0 +1,105 @@
+name: 'VS Code Extension Publisher'
+description: '发布 VS Code 扩展到 Marketplace'
+
+inputs:
+  version:
+    description: '发布版本号 (留空则使用 package.json 中的版本)'
+    required: false
+  pre_release:
+    description: '是否为预发布版本'
+    required: false
+    default: 'false'
+  package_manager:
+    description: '包管理器 (npm/yarn/pnpm)'
+    required: false
+    default: 'npm'
+  node_version:
+    description: 'Node.js 版本'
+    required: false
+    default: '20'
+  vsce_pat:
+    description: 'VS Code Marketplace Personal Access Token'
+    required: true
+
+outputs:
+  version:
+    description: '发布的版本号'
+    value: ${{ steps.get_version.outputs.version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node_version }}
+        cache: ${{ inputs.package_manager }}
+
+    - name: 安装依赖
+      shell: bash
+      run: |
+        case "${{ inputs.package_manager }}" in
+          npm)
+            npm ci
+            ;;
+          yarn)
+            yarn install --frozen-lockfile
+            ;;
+          pnpm)
+            pnpm install --frozen-lockfile
+            ;;
+          *)
+            echo "不支持的包管理器: ${{ inputs.package_manager }}"
+            exit 1
+            ;;
+        esac
+
+    - name: 获取版本号
+      id: get_version
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.version }}" ]; then
+          VERSION="${{ inputs.version }}"
+          echo "使用指定版本: $VERSION"
+        else
+          VERSION=$(node -p "require('./package.json').version")
+          echo "使用 package.json 版本: $VERSION"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: 发布到 VS Code Marketplace
+      shell: bash
+      run: |
+        # 安装 vsce
+        npm install -g @vscode/vsce
+        
+        # 构建发布命令
+        PUBLISH_CMD="vsce publish"
+        
+        VERSION="${{ steps.get_version.outputs.version }}"
+        if [ -n "$VERSION" ] && [ "$VERSION" != "null" ]; then
+          PUBLISH_CMD="$PUBLISH_CMD $VERSION"
+        fi
+        
+        if [ "${{ inputs.pre_release }}" = "true" ]; then
+          PUBLISH_CMD="$PUBLISH_CMD --pre-release"
+        fi
+        
+        PUBLISH_CMD="$PUBLISH_CMD -p ${{ inputs.vsce_pat }}"
+        
+        echo "🚀 发布到 VS Code Marketplace..."
+        echo "执行命令: vsce publish [版本] [选项]"
+        $PUBLISH_CMD
+        echo "✅ 发布成功!"
+
+    - name: 发布总结
+      shell: bash
+      run: |
+        echo "## 🚀 VS Code Marketplace 发布成功" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **版本号**: \`${{ steps.get_version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **预发布**: ${{ inputs.pre_release }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **包管理器**: ${{ inputs.package_manager }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Node.js**: ${{ inputs.node_version }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🎉 扩展已成功发布到 VS Code Marketplace！"

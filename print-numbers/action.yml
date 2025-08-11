@@ -19,12 +19,6 @@ inputs:
     required: false
     default: 'list'
 
-outputs:
-  result:
-    description: '生成的数字列表'
-  count:
-    description: '打印的数字总数'
-
 runs:
   using: 'composite'
   steps:
