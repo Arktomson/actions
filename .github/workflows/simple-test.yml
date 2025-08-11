@@ -8,7 +8,7 @@ jobs:
     name: Test Print Numbers External Reference
     steps:
       - name: Test print-numbers via external reference
-        uses: Arktomson/actions/print-numbers@v1.0.1
+        uses: Arktomson/actions/print-numbers@v1.0.0
         with:
           number: 7
           prefix: "External Test: "
