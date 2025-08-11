@@ -35,7 +35,7 @@ jobs:
 
       - name: 发布扩展
         id: publish
-        uses: Arktomson/actions/vscode-extension-publish@v1.0.0
+        uses: Arktomson/actions/vscode-extension-publish@v1.0.2
         with:
           version: ${{ inputs.version }}
           pre_release: ${{ inputs.pre_release }}
